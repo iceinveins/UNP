@@ -20,15 +20,16 @@ main(int argc, char **argv)
 
 	Listen(listenfd, LISTENQ);
 
+	struct sockaddr_in cliaddr;
+	socklen_t addrlen = sizeof(cliaddr);
 	for ( ; ; ) {
-		connfd = Accept(listenfd, (SA *) NULL, NULL);
-
+		connfd = Accept(listenfd, (SA *) &cliaddr, &addrlen);
+		printf("Connection from %s, port %d\n", inet_ntop(AF_INET, &cliaddr.sin_addr, buff, sizeof(buff)), ntohs(cliaddr.sin_port));
         ticks = time(NULL);
         snprintf(buff, sizeof(buff), "%.24s\r\n", ctime(&ticks));
         int i=0,siezeperwrite = 2;
         for (i = 0; i < strlen(buff); i=i+siezeperwrite)
         {
-        	/* code */
         	Write(connfd, buff+i, siezeperwrite);
         }
 

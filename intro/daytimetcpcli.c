@@ -69,14 +69,17 @@ main(int argc, char **argv)
 	if (inet_pton(AF_INET, argv[1], &servaddr.sin_addr) <= 0)
 		err_quit("inet_pton error for %s", argv[1]);
 
-	/*-----------------------------------------------------------*/
+	/*
+	//-----------------------------------------------------------//
 	struct sockaddr_in cliaddr;
 	bzero(&cliaddr,sizeof(cliaddr));
 	cliaddr.sin_family = AF_INET;
 	cliaddr.sin_addr.s_addr = htons(INADDR_ANY);
 	cliaddr.sin_port = htons(7777);
 	Bind(sockfd,(SA *)&cliaddr,sizeof(cliaddr));
-	/*-----------------------------------------------------------*/
+	//-----------------------------------------------------------//
+	*/
+
 	if (connect(sockfd, (SA *) &servaddr, sizeof(servaddr)) < 0)
 		err_sys("connect error");
 
