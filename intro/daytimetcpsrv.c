@@ -16,7 +16,7 @@ main(int argc, char **argv)
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	servaddr.sin_port        = htons(9999);	/* daytime server */
 
-	Bind(listenfd, (SA *) &servaddr, sizeof(servaddr));
+	// Bind(listenfd, (SA *) &servaddr, sizeof(servaddr));
 
 	Listen(listenfd, LISTENQ);
 
