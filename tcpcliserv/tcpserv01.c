@@ -1,5 +1,7 @@
 #include	"unp.h"
 
+void sig_chld233(int signo);
+void str_echo233(int connfd);
 int
 main(int argc, char **argv)
 {
@@ -19,15 +21,55 @@ main(int argc, char **argv)
 
 	Listen(listenfd, LISTENQ);
 
+	Signal(SIGCHLD, sig_chld233);		// handle zombie progress
+
 	for ( ; ; ) {
 		clilen = sizeof(cliaddr);
-		connfd = Accept(listenfd, (SA *) &cliaddr, &clilen);
+		if ( connfd = accept(listenfd, (SA *) &cliaddr, &clilen) < 0)
+		{	// handle accept error:EINTR(caused by SIGCHLD) on some machine
+			if(errno == EINTR)
+				continue;
+			else
+				err_sys("accept error");
+		}
 
 		if ( (childpid = Fork()) == 0) {	/* child process */
 			Close(listenfd);	/* close listening socket */
-			str_echo(connfd);	/* process the request */
+			str_echo233(connfd);	/* process the request */
 			exit(0);
 		}
 		Close(connfd);			/* parent closes connected socket */
 	}
+}
+
+void sig_chld233(int signo)
+{
+	pid_t pid;
+	int stat;
+
+	while( (pid = waitpid(-1, &stat, WNOHANG)) > 0)	// must call waitpid ,cause Unix signals don't have queue, 
+	{													// so if kernal get N SIGCHLD, it only handle once 
+		printf("child %d terminated\n", pid);
+	}
+	return;
+}
+
+void str_echo233(int connfd)
+{
+	printf("ENTER str_echo233\n");
+	ssize_t		n;
+	char		buf[MAXLINE];
+
+again:
+	while ( (n = read(connfd, buf, MAXLINE)) > 0)
+	{
+		printf("call read ,size = %d\n", n);
+		Writen(connfd, buf, n);
+		printf("Writen successul\n");
+	}
+
+	if (n < 0 && errno == EINTR)
+		goto again;
+	else if (n < 0)
+		err_sys("str_echo233: read error");
 }
