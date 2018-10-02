@@ -9,6 +9,7 @@ main(int argc, char **argv)
 	pid_t				childpid;
 	socklen_t			clilen;
 	struct sockaddr_in	cliaddr, servaddr;
+	void sig_chld233(int);
 
 	listenfd = Socket(AF_INET, SOCK_STREAM, 0);
 
@@ -25,8 +26,8 @@ main(int argc, char **argv)
 
 	for ( ; ; ) {
 		clilen = sizeof(cliaddr);
-		if ( connfd = accept(listenfd, (SA *) &cliaddr, &clilen) < 0)
-		{	// handle accept error:EINTR(caused by SIGCHLD) on some machine
+		if ( (connfd = accept(listenfd, (SA *) &cliaddr, &clilen)) < 0)	// handle accept error:EINTR(caused by SIGCHLD) on some machine
+		{	
 			if(errno == EINTR)
 				continue;
 			else
@@ -56,20 +57,28 @@ void sig_chld233(int signo)
 
 void str_echo233(int connfd)
 {
-	printf("ENTER str_echo233\n");
 	ssize_t		n;
 	char		buf[MAXLINE];
 
-again:
-	while ( (n = read(connfd, buf, MAXLINE)) > 0)
+	for( ; ; )
 	{
-		printf("call read ,size = %d\n", n);
-		Writen(connfd, buf, n);
-		printf("Writen successul\n");
-	}
+		if( (n = read(connfd, buf, MAXLINE)) > 0)
+		{
+			Writen(connfd, buf, n);
+		}
+		
 
-	if (n < 0 && errno == EINTR)
-		goto again;
-	else if (n < 0)
-		err_sys("str_echo233: read error");
+	}
+// again:
+// 	while ( (n = read(connfd, buf, MAXLINE)) > 0)
+// 	{
+// 		printf("call read ,size = %d\n", n);
+// 		Writen(connfd, buf, n);
+// 		printf("Writen successul\n");
+// 	}
+
+// 	if (n < 0 && errno == EINTR)
+// 		goto again;
+// 	else if (n < 0)
+// 		err_sys("str_echo233: read error");
 }
