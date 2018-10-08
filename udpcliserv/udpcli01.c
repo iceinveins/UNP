@@ -1,7 +1,9 @@
 #include	"unp.h"
 
-int
-main(int argc, char **argv)
+void dg_cli_direct(FILE *fp, int sockfd, struct sockaddr *, socklen_t);
+void Bind2(int sockfd);
+
+int main(int argc, char **argv)
 {
 	int					sockfd;
 	struct sockaddr_in	servaddr;
@@ -16,7 +18,44 @@ main(int argc, char **argv)
 
 	sockfd = Socket(AF_INET, SOCK_DGRAM, 0);
 
-	dg_cli(stdin, sockfd, (SA *) &servaddr, sizeof(servaddr));
+	Bind2(sockfd);
+	dg_cli_direct(stdin, sockfd, (SA *) &servaddr, sizeof(servaddr));
 
 	exit(0);
+}
+
+void dg_cli_direct(FILE *fp, int sockfd, struct sockaddr *servaddr, socklen_t socklen)
+{
+	int n;
+	char sendline[MAXLINE];
+	char recvline[MAXLINE+1];
+	socklen_t servlen;
+	struct sockaddr *reply_addr;
+	reply_addr = Malloc(socklen);
+	
+	while(Fgets(sendline, MAXLINE, fp) > 0)
+	{
+		Sendto(sockfd, sendline, strlen(sendline), 0, servaddr, socklen);
+
+		servlen = socklen;
+		n = Recvfrom(sockfd, recvline, MAXLINE, 0, reply_addr, &servlen);
+		if(servlen != socklen || memcmp(servaddr, reply_addr, servlen) != 0 )
+		{
+			printf("reply from %s (ignored)\n", Sock_ntop(reply_addr, servlen));
+			continue;
+		}
+		recvline[n] = 0;
+		Fputs(recvline, stdout);
+	}
+}
+
+void Bind2(int sockfd)
+{
+	struct sockaddr_in cliaddr;
+	bzero(&cliaddr,sizeof(cliaddr));
+	cliaddr.sin_family = AF_INET;
+	char ipaddr[10] = "127.0.0.1";		// try bind actual ip on different device
+	Inet_pton(AF_INET, ipaddr, &cliaddr.sin_addr);
+	cliaddr.sin_port = htons(7777);
+	Bind(sockfd,(SA *)&cliaddr,sizeof(cliaddr));
 }
